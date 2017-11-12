@@ -5,14 +5,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>c2061e2e-10f7-46bc-a74f-26cd8d8cf611</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>SpotifyFS</RootNamespace>
-    <AssemblyName>SpotifyFS</AssemblyName>
+    <ProjectGuid>e982606f-ca18-41fe-9fd0-0a2cd98f80f0</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>FSConsole</RootNamespace>
+    <AssemblyName>FSConsole</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Name>SpotifyFS</Name>
+    <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
+    <Name>FSConsole</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,7 +22,9 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,7 +33,9 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -50,22 +54,10 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <Content Include="packages.config" />
-    <None Include="TypeSamples\FullArtist.json" />
-    <None Include="TypeSamples\FullAlbum.json" />
-    <None Include="TypeSamples\FullTrack.json" />
-    <None Include="TypeSamples\AudioAnalysis.json" />
-    <None Include="TypeSamples\AudioFeatures.json" />
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Enums.fs" />
-    <Compile Include="WebBuilderModels.fs" />
-    <Compile Include="SimpleHttpServer.fs" />
-    <Compile Include="SpotifyWebBuilder.fs" />
-    <Compile Include="SpotifyWebClient.fs" />
-    <Compile Include="MyTypeProvider.fs" />
-    <Compile Include="SpotifyWebApi.fs" />
-    <Compile Include="Auth.fs" />
-    <Compile Include="WebApiFactory.fs" />
+    <Compile Include="Program.fs" />
+    <None Include="App.config" />
+    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
@@ -83,15 +75,18 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
     <Reference Include="System.ValueTuple">
       <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net461\System.ValueTuple.dll</HintPath>
     </Reference>
-    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SpotifyFS\SpotifyFS.fsproj">
+      <Name>SpotifyFS</Name>
+      <Project>{c2061e2e-10f7-46bc-a74f-26cd8d8cf611}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

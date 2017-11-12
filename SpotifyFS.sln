@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpotifyFS", "SpotifyFS\SpotifyFS.fsproj", "{C2061E2E-10F7-46BC-A74F-26CD8D8CF611}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSConsole", "FSConsole\FSConsole.fsproj", "{E982606F-CA18-41FE-9FD0-0A2CD98F80F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{C2061E2E-10F7-46BC-A74F-26CD8D8CF611}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2061E2E-10F7-46BC-A74F-26CD8D8CF611}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2061E2E-10F7-46BC-A74F-26CD8D8CF611}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E982606F-CA18-41FE-9FD0-0A2CD98F80F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E982606F-CA18-41FE-9FD0-0A2CD98F80F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E982606F-CA18-41FE-9FD0-0A2CD98F80F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E982606F-CA18-41FE-9FD0-0A2CD98F80F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
