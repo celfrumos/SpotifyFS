@@ -14,61 +14,93 @@
     open SpotifyFS.SpotifyWebBuilder
     open System.Net
     open Types
+    open SuaveServer
+
+    type SpotifyWebApiConfig = 
+        { 
+            UseAuth: bool
+            UseAutoRetry: bool
+            RetryAfter: int
+            RetryTimes: int
+        }
+        
 
     // ReSharper disable once InconsistentNaming
     [<AllowNullLiteral>]
-    type SpotifyWebApi(?useAuth, ?accessToken, ?tokenType, ?retryAfter, ?useAutoRetry, ?retryTimes) =  class
-        inherit Object()
+    type SpotifyWebApi(auth: SpotifyAuthResponse, ?apiConfig) =  class
+        inherit Object()        
+        
+        static member DefaultConfig = { 
+            UseAuth = true
+            UseAutoRetry = false
+            RetryAfter = 50
+            RetryTimes = 10
+        }
+        new(serverConfig: ServerConfig, ?apiConfig) =
+            let auth = SuaveServer.AuthenticateSpotify serverConfig
+            let config =  defaultArg apiConfig SpotifyWebApi.DefaultConfig
+            new SpotifyWebApi(auth, config)
+            
+            
+        new(useAuth: bool, token: Token)= 
+            let auth: SpotifyAuthResponse = {AccessToken= token.AccessToken; TokenType= token.TokenType; ExpiresIn = token.ExpiresIn; State= "XSS"}
+            let config = { SpotifyWebApi.DefaultConfig with UseAuth = useAuth }
+            new SpotifyWebApi(auth, config)
+
+
+        static member Create (serverConfig: ServerConfig) (apiConfig: SpotifyWebApiConfig) =
+            new SpotifyWebApi(serverConfig, apiConfig)
+            
         
         //#region Configuration
 
+        member val Config: SpotifyWebApiConfig = defaultArg apiConfig SpotifyWebApi.DefaultConfig
+        
         /// <summary>
         ///     The type of the <see cref="AccessToken"/>
         /// </summary>
-        member val TokenType = defaultArg tokenType "Basic" with get,set
+        member val TokenType = auth.TokenType
 
         /// <summary>
         ///     A valid token issued by spotify. Used only when <see cref="UseAuth"/> is true
         /// </summary>
-        member val AccessToken = "" with get, set
-
-        /// <summary>
-        ///     If true, an authorization header based on <see cref="TokenType"/> and <see cref="AccessToken"/> will be used
-        /// </summary>
-        member val UseAuth = defaultArg useAuth true with get, set
-
+        member val AccessToken = auth.AccessToken 
+        
         /// <summary>
         ///     A custom WebClient, used for Unit-Testing
         /// </summary>
-        member val WebClient = new SpotifyWebClient()  with get, set
-        
-               
+        member val WebClient = new SpotifyWebClient() with get, set
+                       
         interface IDisposable with
             member this.Dispose() =        
                 this.WebClient.Dispose()
                 GC.SuppressFinalize this
         
         /// <summary>
+        ///     If true, an authorization header based on <see cref="TokenType"/> and <see cref="AccessToken"/> will be used
+        /// </summary>
+        member this.UseAuth = this.Config.UseAuth
+
+        /// <summary>
         ///     Specifies after how many miliseconds should a failed request be retried.
         /// </summary>
-        member val RetryAfter = defaultArg retryAfter 50 with get, set
+        member this.RetryAfter = this.Config.RetryAfter
 
         /// <summary>
         ///     Should a failed request (specified by <see cref="RetryErrorCodes"/> be automatically retried or not.
         /// </summary>
-        member val UseAutoRetry = defaultArg useAutoRetry false with get, set
+        member this.UseAutoRetry = this.Config.UseAutoRetry
 
         /// <summary>
         ///     Maximum number of tries for one failed request.
         /// </summary>
-        member val RetryTimes = defaultArg retryTimes 10 with get, set
+        member this.RetryTimes = this.Config.RetryTimes
 
         /// <summary>
         ///     Error codes that will trigger auto-retry if <see cref="UseAutoRetry"/> is enabled.
         /// </summary>
         member val RetryErrorCodes = seq{ yield HttpStatusCode.InternalServerError; yield HttpStatusCode.BadGateway; yield HttpStatusCode.ServiceUnavailable} with get, set 
-        
-           
+                   
         member this.DownloadDataAltAsync(url) = async {
             let headers = Dictionary<string, string>()
             if (this.UseAuth) then
@@ -76,7 +108,7 @@
             else 
                 do()
 
-            let res = this.WebClient.DownloadAsync(url, Some headers)
+            let res = this.WebClient.DownloadAsync(url, headers)
             return! res
           }
 
@@ -85,7 +117,7 @@
             let rec doDownload first (triesLeft: int) (lastError: Error option) (response: (ResponseInfo * string) option) = async {
                 let hasRetryErrorCode() = this.RetryErrorCodes.Contains(lastError.Value.Status)
                 if first || this.UseAutoRetry && triesLeft > 0 && (lastError.IsNone || hasRetryErrorCode()) then
-                    if (not first || response.IsNone) then
+                    if (not first && response.IsNone) then
                         do! Async.AwaitTask(Task.Delay(this.RetryAfter))
                     else
                         do()       
@@ -185,7 +217,7 @@
             let market = defaultArg market ""
             let! resp = this.DownloadDataAsync(SpotifyWebBuilder.GetAlbum market id)
             return match resp with
-                   | Some(inf, json) -> Some(Albums.Parse json)
+                   | Some(inf, json) -> Some(AlbumProvider.Parse json)
                    | None -> None
             
         }

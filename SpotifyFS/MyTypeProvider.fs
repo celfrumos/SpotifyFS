@@ -17,16 +17,16 @@
         let edSheeranUrl = GetArtist edSheeranId
 
 
-        type Artists = JsonProvider<"C:/Users/Josh/source/repos/FSharp/SpotifyFS/SpotifyFS/TypeSamples/FullArtist.json", EmbeddedResource="SpotifyFS.Types, FullArtist.json", RootName="FullArtist"> 
+        type ArtistProvider = JsonProvider<"C:/Users/Josh/source/repos/FSharp/SpotifyFS/SpotifyFS/TypeSamples/FullArtist.json", EmbeddedResource="SpotifyFS.Types, FullArtist.json", RootName="FullArtist"> 
     
-        type Albums = JsonProvider<"C:/Users/Josh/source/repos/FSharp/SpotifyFS/SpotifyFS/TypeSamples/FullAlbum.json", EmbeddedResource="SpotifyFS.Types, FullAlbum.json", RootName="FullAlbum"> 
-
+        type AlbumProvider = JsonProvider<"C:/Users/Josh/source/repos/FSharp/SpotifyFS/SpotifyFS/TypeSamples/FullAlbum.json", EmbeddedResource="SpotifyFS.Types, FullAlbum.json", RootName="FullAlbum"> 
+        
         type Spotify = JsonProvider<"C:/Users/Josh/source/repos/FSharp/SpotifyFS/SpotifyFS/TypeSamples/FullTrack.json", EmbeddedResource="SpotifyFS.Types, FullTrack.json",  RootName="FullTrack">
 
         type AudioFeaturesProvider = JsonProvider<"C:/Users/Josh/source/repos/FSharp/SpotifyFS/SpotifyFS/TypeSamples/AudioFeatures.json", EmbeddedResource="SpotifyFS.Types, AudioFeatures.json",  RootName="AudioFeatures">
         
         type Spotify.Artist with
-            member this.GetFullVersion() = Artists.AsyncLoad this.Href
+            member this.GetFullVersion() = ArtistProvider.AsyncLoad this.Href
             
 
         type Spotify.FullTrack with

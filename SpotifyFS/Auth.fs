@@ -16,170 +16,170 @@
     [<Serializable>]
     type SpotifyWebApiException(msg) = inherit Exception(msg)
     
-    type OnImplicitResponseReceived = delegate of (Token * string) -> unit
+    //type OnImplicitResponseReceived = delegate of (Token * string) -> unit
 
-    type ImplicitGrantAuth(ClientId, RedirectUri, State, Scope: Scope, ?showDialog) = class       
+    //type ImplicitGrantAuth(ClientId, RedirectUri, State, Scope: Scope, ?showDialog) = class       
     
-            //public delegate void OnResponseReceived(Token token, string state);
-            let _onResponseReceived = new Event<Token * string>() 
+    //        //public delegate void OnResponseReceived(Token token, string state);
+    //        let _onResponseReceived = new Event<Token * string>() 
             
-            let mutable ShowDialog = (defaultArg showDialog false)
-            let mutable _httpThread: Thread = null
-            let mutable _httpServer: SimpleHttpServer = (new SimpleHttpServer(8080, AuthType.Authorization))
+    //        let mutable ShowDialog = (defaultArg showDialog false)
+    //        let mutable _httpThread: Thread = null
+    //        let mutable _httpServer: SimpleHttpServer = (new SimpleHttpServer(8080, AuthType.Authorization))
 
-            [<CLIEvent>]
-            member this.OnResponseReceivedEvent =  _onResponseReceived.Publish
+    //        [<CLIEvent>]
+    //        member this.OnResponseReceivedEvent =  _onResponseReceived.Publish
 
-            member private this.GetUri(): string =                
-                sprintf "https://accounts.spotify.com/authorize/?client_id=%s&response_type=token&redirect_uri=%A&state=%s&scope=%s&show_dialog=%b" 
-                    ClientId RedirectUri State (StringAttribute.GetOrEmptyString(Scope, " ")) ShowDialog
+    //        member private this.GetUri(): string =                
+    //            sprintf "https://accounts.spotify.com/authorize/?client_id=%s&response_type=token&redirect_uri=%A&state=%s&scope=%s&show_dialog=%b" 
+    //                ClientId RedirectUri State (StringAttribute.GetOrEmptyString(Scope, " ")) ShowDialog
 
-            /// <summary>
-            ///     Start the auth process (Make sure the internal HTTP-Server ist started)
-            /// </summary>
-            member this.DoAuth() =            
-                this.GetUri()
-                |> Process.Start
+    //        /// <summary>
+    //        ///     Start the auth process (Make sure the internal HTTP-Server ist started)
+    //        /// </summary>
+    //        member this.DoAuth() =            
+    //            this.GetUri()
+    //            |> Process.Start
                 
 
-            /// <summary>
-            ///     Start the internal HTTP-Server
-            /// </summary>
-            member this.StartHttpServer(?port) =
-                let port = defaultArg port 80
-                _httpServer <- new SimpleHttpServer(port, AuthType.Implicit)
-                _httpServer.OnAuth.Add(this.HttpServerOnOnAuth)
+    //        /// <summary>
+    //        ///     Start the internal HTTP-Server
+    //        /// </summary>
+    //        member this.StartHttpServer(?port) =
+    //            let port = defaultArg port 80
+    //            _httpServer <- new SimpleHttpServer(port, AuthType.Implicit)
+    //            _httpServer.OnAuth.Add(this.HttpServerOnOnAuth)
 
-                _httpThread <- new Thread(new ThreadStart(fun _ -> _httpServer.Listen() |> ignore))
-                _httpThread.Start()
+    //            _httpThread <- new Thread(new ThreadStart(fun _ -> _httpServer.Listen() |> ignore))
+    //            _httpThread.Start()
             
 
-            member this.HttpServerOnOnAuth(e: AuthEventArgs) =
-                let token = new Token(e.Code,  e.TokenType, expiresIn = e.ExpiresIn, error = e.Error)
-                _onResponseReceived.Trigger(token, e.State)
+    //        member this.HttpServerOnOnAuth(e: AuthEventArgs) =
+    //            let token = { Token.Default with AccessToken = e.Code;  TokenType = e.TokenType; ExpiresIn = e.ExpiresIn; Error = if isNull e.Error then None else Some e.Error}
+    //            _onResponseReceived.Trigger(token, e.State)
             
 
-            /// <summary>
-            ///     This will stop the internal HTTP-Server (Should be called after you got the Token)
-            /// </summary>
-            member this.StopHttpServer() =            
-                _httpServer.Dispose()
-    end
+    //        /// <summary>
+    //        ///     This will stop the internal HTTP-Server (Should be called after you got the Token)
+    //        /// </summary>
+    //        member this.StopHttpServer() =            
+    //            _httpServer.Dispose()
+    //end
 
-    type WebAPIFactory(redirectUrl, listeningPort: int, clientId, scope, ?timeout, ?xss) = class
+    //type WebAPIFactory(redirectUrl, listeningPort: int, clientId, scope, ?timeout, ?xss) = class
     
-        let _timeout = defaultArg timeout (TimeSpan.FromSeconds 20.0)
+    //    let _timeout = defaultArg timeout (TimeSpan.FromSeconds 20.0)
         
-        let _xss = defaultArg xss "XSS"
-    
-
-        member this.GetWebApi() = async {
-        
-            let redirect = new UriBuilder(Uri(redirectUrl))
-            redirect.Port <- listeningPort
-            let authentication = new ImplicitGrantAuth(clientId, redirect.Uri.OriginalString.TrimEnd('/'), _xss, scope)
-
-            let authenticationWaitFlag = new AutoResetEvent(false);
-            let mutable spotifyWebApi = null
-
-            let newEvent = fun (token, state) ->                
-                                            spotifyWebApi <- this.HandleSpotifyResponse(state, token)
-                                            authenticationWaitFlag.Set() |> ignore
-
-            authentication.OnResponseReceivedEvent.Add(newEvent)
-
-            try
-            
-                authentication.StartHttpServer(listeningPort)
-
-                authentication.DoAuth() |> ignore
-
-                authenticationWaitFlag.WaitOne(_timeout) |> ignore
-
-                if (spotifyWebApi = null) then
-                    raise(new TimeoutException(sprintf "No valid response received for the last %f seconds" _timeout.TotalSeconds))
-                else 
-                    do()
-            
-            finally            
-                authentication.StopHttpServer()            
-
-            return spotifyWebApi
-        }
-
-        member this.HandleSpotifyResponse(state, token: Token) =
-            if (state <> _xss) 
-                then raise(new SpotifyWebApiException(sprintf "Wrong state '%s' received." state))
-
-            elif (token.Error <> null) 
-                then raise(new SpotifyWebApiException(sprintf "Error: %s" token.Error))
-            else
-                new SpotifyWebApi(true, token.AccessToken, token.TokenType)                
-    end
-
-    type AuthorizationCodeAuthResponse = { Code: string; State : string; Error : string}
-
-    type ClientCredentialsAuth(ClientId, ClientSecret, Scope: Scope) = class
+    //    let _xss = defaultArg xss "XSS"
     
 
-        /// <summary>
-        ///     Starts the auth process and
-        /// </summary>
-        /// <returns>A new Token</returns>
-        member this.DoAuth() = 
+    //    member this.GetWebApi() = async {
         
-            use wc = new WebClient()
-            
-            wc.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(ClientId + ":" + ClientSecret)));
+    //        let redirect = new UriBuilder(Uri(redirectUrl))
+    //        redirect.Port <- listeningPort
+    //        let authentication = new ImplicitGrantAuth(clientId, redirect.Uri.OriginalString.TrimEnd('/'), _xss, scope)
 
-            let col = new NameValueCollection()
-            col.Add("grant_type", "client_credentials")
-            col.Add("scope", Scope.GetStringAttribute(" "))
-            
-            let data = 
-                try            
-                    wc.UploadValues("https://accounts.spotify.com/api/token", "POST", col);
-            
-                with 
+    //        let authenticationWaitFlag = new AutoResetEvent(false);
+    //        let mutable spotifyWebApi = null
 
-                | :? WebException as e ->            
-                    use reader = new StreamReader(e.Response.GetResponseStream())                
-                    Encoding.UTF8.GetBytes(reader.ReadToEnd());
+    //        let newEvent = fun (token, state) ->                
+    //                                        spotifyWebApi <- this.HandleSpotifyResponse(state, token)
+    //                                        authenticationWaitFlag.Set() |> ignore
+
+    //        authentication.OnResponseReceivedEvent.Add(newEvent)
+
+    //        try
+            
+    //            authentication.StartHttpServer(listeningPort)
+
+    //            authentication.DoAuth() |> ignore
+
+    //            authenticationWaitFlag.WaitOne(_timeout) |> ignore
+
+    //            if (spotifyWebApi = null) then
+    //                raise(new TimeoutException(sprintf "No valid response received for the last %f seconds" _timeout.TotalSeconds))
+    //            else 
+    //                do()
+            
+    //        finally            
+    //            authentication.StopHttpServer()            
+
+    //        return spotifyWebApi
+    //    }
+
+    //    member this.HandleSpotifyResponse(state, token: Token) =
+    //        if (state <> _xss) 
+    //            then raise(new SpotifyWebApiException(sprintf "Wrong state '%s' received." state))
+
+    //        elif (token.Error.IsNone) 
+    //            then raise(new SpotifyWebApiException(sprintf "Error: %s" token.Error.Value))
+    //        else
+    //            new SpotifyWebApi(true, token)                
+    //end
+
+    //type AuthorizationCodeAuthResponse = { Code: string; State : string; Error : string}
+
+    //type ClientCredentialsAuth(ClientId, ClientSecret, Scope: Scope) = class
+    
+
+    //    /// <summary>
+    //    ///     Starts the auth process and
+    //    /// </summary>
+    //    /// <returns>A new Token</returns>
+    //    member this.DoAuth() = 
+        
+    //        use wc = new WebClient()
+            
+    //        wc.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(ClientId + ":" + ClientSecret)));
+
+    //        let col = new NameValueCollection()
+    //        col.Add("grant_type", "client_credentials")
+    //        col.Add("scope", Scope.GetStringAttribute(" "))
+            
+    //        let data = 
+    //            try            
+    //                wc.UploadValues("https://accounts.spotify.com/api/token", "POST", col);
+            
+    //            with 
+
+    //            | :? WebException as e ->            
+    //                use reader = new StreamReader(e.Response.GetResponseStream())                
+    //                Encoding.UTF8.GetBytes(reader.ReadToEnd());
                 
             
-            JsonConvert.DeserializeObject<Token>(Encoding.UTF8.GetString(data));
+    //        JsonConvert.DeserializeObject<Token>(Encoding.UTF8.GetString(data));
             
         
 
-        /// <summary>
-        ///     Starts the auth process async and
-        /// </summary>
-        /// <returns>A new Token</returns>
-        member this.DoAuthAsync() = async {
-            use wc = new WebClient()
+    //    /// <summary>
+    //    ///     Starts the auth process async and
+    //    /// </summary>
+    //    /// <returns>A new Token</returns>
+    //    member this.DoAuthAsync() = async {
+    //        use wc = new WebClient()
             
-            wc.Headers.Add("Authorization",
-                "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(ClientId + ":" + ClientSecret)));
+    //        wc.Headers.Add("Authorization",
+    //            "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(ClientId + ":" + ClientSecret)));
 
-            let col = new NameValueCollection()
-            col.Add("grant_type", "client_credentials")
-            col.Add("scope", Scope.GetStringAttribute(" "))
+    //        let col = new NameValueCollection()
+    //        col.Add("grant_type", "client_credentials")
+    //        col.Add("scope", Scope.GetStringAttribute(" "))
             
-            let mutable data = Array.InitWithZeros<byte>(0)
+    //        let mutable data = Array.InitWithZeros<byte>(0)
 
-            try            
-                let! bytes = Async.AwaitTask(wc.UploadValuesTaskAsync("https://accounts.spotify.com/api/token", "POST", col))
-                data <- bytes
+    //        try            
+    //            let! bytes = Async.AwaitTask(wc.UploadValuesTaskAsync("https://accounts.spotify.com/api/token", "POST", col))
+    //            data <- bytes
             
-            with 
-            | :? WebException as e ->            
-                use reader = new StreamReader(e.Response.GetResponseStream())                
-                let! str = Async.AwaitTask(reader.ReadToEndAsync())
-                data <- Encoding.UTF8.GetBytes(str)
+    //        with 
+    //        | :? WebException as e ->            
+    //            use reader = new StreamReader(e.Response.GetResponseStream())                
+    //            let! str = Async.AwaitTask(reader.ReadToEndAsync())
+    //            data <- Encoding.UTF8.GetBytes(str)
 
-            return JsonConvert.DeserializeObject<Token>(Encoding.UTF8.GetString(data));    
-        }
-    end
+    //        return JsonConvert.DeserializeObject<Token>(Encoding.UTF8.GetString(data));    
+    //    }
+    //end
 
     //type OnAuthResponseReceived= delegate of AuthorizationCodeAuthResponse -> unit
     //type AuthorizationCodeAuth(ClientId, RedirectUri, State, Scope) =
